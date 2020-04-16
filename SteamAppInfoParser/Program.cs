@@ -1,13 +1,31 @@
 ﻿using System;
+using System.IO;
+using Microsoft.Win32;
 
 namespace SteamAppInfoParser
 {
     class Program
     {
-        static void Main()
+        static int Main()
         {
+            string steamLocation = null;
+
+            var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Valve\\Steam") ??
+                      RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey("SOFTWARE\\Valve\\Steam");
+
+            if (key != null && key.GetValue("SteamPath") is string steamPath)
+            {
+                steamLocation = steamPath;
+            }
+
+            if (steamLocation == null)
+            {
+                Console.Error.WriteLine("Can not find Steam");
+                return 1;
+            }
+
             var appInfo = new AppInfo();
-            appInfo.Read("P:/Steam/appcache/appinfo.vdf");
+            appInfo.Read(Path.Join(steamLocation, "appcache", "appinfo.vdf"));
 
             Console.WriteLine($"{appInfo.Apps.Count} apps");
 
@@ -22,7 +40,7 @@ namespace SteamAppInfoParser
             Console.WriteLine();
 
             var packageInfo = new PackageInfo();
-            packageInfo.Read("P:/Steam/appcache/packageinfo.vdf");
+            packageInfo.Read(Path.Join(steamLocation, "appcache", "packageinfo.vdf"));
 
             Console.WriteLine($"{packageInfo.Packages.Count} packages");
 
@@ -34,7 +52,7 @@ namespace SteamAppInfoParser
                 }
             }
 
-            Console.ReadKey();
+            return 0;
         }
     }
 }
