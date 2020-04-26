@@ -1,6 +1,6 @@
 ## appinfo.vdf
 ```
-uint32   - MAGIC: "'DV\x07"
+uint32   - MAGIC: 27 44 56 07
 uint32   - UNIVERSE: 1
 ---- repeated app sections ----
 uint32   - AppID
@@ -17,13 +17,26 @@ uint32   - EOF: 0
 
 ## packageinfo.vdf
 ```
-uint32   - MAGIC: "'UV\x06"
+uint32   - MAGIC: 28 55 56 06
 uint32   - UNIVERSE: 1
 ---- repeated package sections ----
 uint32   - PackageID
 20bytes  - SHA1
 uint32   - changeNumber
 uint64   - picsToken // added in April 2020, magic not changed
+variable - binary_vdf
+---- end of section ---------
+uint32   - EOF: 0xFFFFFFFF
+```
+
+## packageinfo.vdf (before april 2020)
+```
+uint32   - MAGIC: 27 55 56 06
+uint32   - UNIVERSE: 1
+---- repeated package sections ----
+uint32   - PackageID
+20bytes  - SHA1
+uint32   - changeNumber
 variable - binary_vdf
 ---- end of section ---------
 uint32   - EOF: 0xFFFFFFFF
