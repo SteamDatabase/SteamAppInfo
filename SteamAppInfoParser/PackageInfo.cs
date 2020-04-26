@@ -9,6 +9,7 @@ namespace SteamAppInfoParser
     class PackageInfo
     {
         private const uint Magic = 0x06_56_55_28;
+        private const uint Magic27 = 0x06_56_55_27;
 
         public EUniverse Universe { get; set; }
 
@@ -31,10 +32,11 @@ namespace SteamAppInfoParser
         public void Read(Stream input)
         {
             using var reader = new BinaryReader(input);
+            var magic = reader.ReadUInt32();
 
-            if (reader.ReadUInt32() != Magic)
+            if (magic != Magic && magic != Magic27)
             {
-                throw new InvalidDataException("Unknown magic header");
+                throw new InvalidDataException($"Unknown magic header: {magic}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
@@ -55,9 +57,14 @@ namespace SteamAppInfoParser
                     SubID = subid,
                     Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
                     ChangeNumber = reader.ReadUInt32(),
-                    Token = reader.ReadUInt64(), // This was added in Steam client around April 2020 without changing the magic
-                    Data = deserializer.Deserialize(input),
                 };
+
+                if (magic != Magic27)
+                {
+                    package.Token = reader.ReadUInt64();
+                }
+
+                package.Data = deserializer.Deserialize(input);
 
                 Packages.Add(package);
             } while (true);

@@ -23,7 +23,7 @@ uint32   - UNIVERSE: 1
 uint32   - PackageID
 20bytes  - SHA1
 uint32   - changeNumber
-uint64   - picsToken // added in April 2020, magic not changed
+uint64   - picsToken // added in April 2020
 variable - binary_vdf
 ---- end of section ---------
 uint32   - EOF: 0xFFFFFFFF

@@ -8,6 +8,10 @@ namespace SteamAppInfoParser
     {
         static int Main()
         {
+            var packageInfo2 = new PackageInfo();
+            packageInfo2.Read(@"C:\Users\xPaw\Desktop\packageinfo.vdf");
+            
+
             string steamLocation = null;
 
             var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Valve\\Steam") ??

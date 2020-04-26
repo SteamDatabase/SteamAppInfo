@@ -31,10 +31,11 @@ namespace SteamAppInfoParser
         public void Read(Stream input)
         {
             using var reader = new BinaryReader(input);
+            var magic = reader.ReadUInt32();
 
-            if (reader.ReadUInt32() != Magic)
+            if (magic != Magic)
             {
-                throw new InvalidDataException("Unknown magic header");
+                throw new InvalidDataException($"Unknown magic header: {magic}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
