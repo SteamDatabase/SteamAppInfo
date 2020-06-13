@@ -1,3 +1,7 @@
+This is a simple program that finds the Steam installation on disk, reads `appinfo.vdf` and `packageinfo.vdf` files and dumps appid/subid and their tokens.
+
+This is mostly intended as an example on how to read these files.
+
 ## appinfo.vdf
 ```
 uint32   - MAGIC: 27 44 56 07
