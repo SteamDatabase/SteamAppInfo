@@ -8,6 +8,7 @@ namespace SteamAppInfoParser
 {
     class AppInfo
     {
+        private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
 
         public EUniverse Universe { get; set; }
@@ -33,7 +34,7 @@ namespace SteamAppInfoParser
             using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic)
+            if (magic != Magic && magic != Magic28)
             {
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
@@ -51,17 +52,24 @@ namespace SteamAppInfoParser
                     break;
                 }
 
+                reader.ReadUInt32(); // size until end of Data
+
                 var app = new App
                 {
                     AppID = appid,
-                    Size = reader.ReadUInt32(),
                     InfoState = reader.ReadUInt32(),
                     LastUpdated = DateTimeFromUnixTime(reader.ReadUInt32()),
                     Token = reader.ReadUInt64(),
                     Hash = new ReadOnlyCollection<byte>(reader.ReadBytes(20)),
                     ChangeNumber = reader.ReadUInt32(),
-                    Data = deserializer.Deserialize(input),
                 };
+
+                if (magic == Magic28)
+                {
+                    app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
+                }
+
+                app.Data = deserializer.Deserialize(input);
 
                 Apps.Add(app);
             } while (true);

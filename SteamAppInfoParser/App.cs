@@ -8,8 +8,6 @@ namespace SteamAppInfoParser
     {
         public uint AppID { get; set; }
 
-        public uint Size { get; set; }
-
         public uint InfoState { get; set; }
 
         public DateTime LastUpdated { get; set; }
@@ -17,6 +15,7 @@ namespace SteamAppInfoParser
         public ulong Token { get; set; }
 
         public ReadOnlyCollection<byte> Hash { get; set; }
+        public ReadOnlyCollection<byte> BinaryDataHash { get; set; }
 
         public uint ChangeNumber { get; set; }
 
