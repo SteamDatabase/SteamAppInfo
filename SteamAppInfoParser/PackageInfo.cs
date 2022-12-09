@@ -36,7 +36,7 @@ namespace SteamAppInfoParser
 
             if (magic != Magic && magic != Magic27)
             {
-                throw new InvalidDataException($"Unknown magic header: {magic}");
+                throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
