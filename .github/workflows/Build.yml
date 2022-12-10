@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push
+
+jobs:
+  Win64:
+    runs-on: windows-2019
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get current date
+      run: echo "CurrentDate=$(date +'%Y-%m-%d')" >> $env:GITHUB_ENV
+
+    - name: Get commit hash
+      run: echo "CommitHash=$(git rev-parse --short=7 HEAD)" >> $env:GITHUB_ENV
+
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3.0.3
+      with:
+        dotnet-version: 7.0
+
+    - uses: EasyDesk/action-dotnet-build@v1
+      with:
+        build-args: -v normal
+        build-configuration: Release
+        path: SteamAppInfo.sln
+
+    - name: Upload artifact to GitHub actions
+      uses: actions/upload-artifact@v3
+      with:
+        name: "SteamAppInfo-${{env.CommitHash}}"
+        path: "SteamAppInfoParser/bin/Release/net7.0/"
+
+    - name: Compress artifacts
+      uses: papeloto/action-zip@v1
+      with:
+        files: 'SteamAppInfoParser/bin/Release/net7.0/'
+        dest: "SteamAppInfo-${{env.CommitHash}}.zip"
+
+    - name: GitHub pre-release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{secrets.GITHUB_TOKEN}}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "[${{env.CurrentDate}}] SteamAppInfo-${{env.CommitHash}}"
+        files: "SteamAppInfo-${{env.CommitHash}}.zip"
