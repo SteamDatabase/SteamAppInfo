@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 using ValveKeyValue;
 
 namespace SteamAppInfoParser
 {
     class AppInfo
     {
+        private const uint Magic29 = 0x07_56_44_29;
         private const uint Magic28 = 0x07_56_44_28;
         private const uint Magic = 0x07_56_44_27;
 
@@ -34,12 +37,32 @@ namespace SteamAppInfoParser
             using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic28)
+            if (magic != Magic && magic != Magic28 && magic != Magic29)
             {
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
+
+            var options = new KVSerializerOptions();
+
+            if (magic == Magic29)
+            {
+                var stringTableOffset = reader.ReadInt64();
+                var offset = reader.BaseStream.Position;
+                reader.BaseStream.Position = stringTableOffset;
+                var stringCount = reader.ReadUInt32();
+                var stringPool = new string[stringCount];
+
+                for (var i = 0; i < stringCount; i++)
+                {
+                    stringPool[i] = ReadNullTermUtf8String(reader.BaseStream);
+                }
+
+                reader.BaseStream.Position = offset;
+
+                options.StringPool = stringPool;
+            }
 
             var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
 
@@ -52,7 +75,8 @@ namespace SteamAppInfoParser
                     break;
                 }
 
-                reader.ReadUInt32(); // size until end of Data
+                var size = reader.ReadUInt32(); // size until end of Data
+                var end = reader.BaseStream.Position + size;
 
                 var app = new App
                 {
@@ -64,20 +88,62 @@ namespace SteamAppInfoParser
                     ChangeNumber = reader.ReadUInt32(),
                 };
 
-                if (magic == Magic28)
+                if (magic == Magic28 || magic == Magic29)
                 {
                     app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
                 }
 
-                app.Data = deserializer.Deserialize(input);
+                app.Data = deserializer.Deserialize(input, options);
+
+                if (reader.BaseStream.Position != end)
+                {
+                    throw new InvalidDataException();
+                }
 
                 Apps.Add(app);
             } while (true);
         }
 
-        public static DateTime DateTimeFromUnixTime(uint unixTime)
+        private static DateTime DateTimeFromUnixTime(uint unixTime)
         {
             return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixTime);
+        }
+
+        private static string ReadNullTermUtf8String(Stream stream)
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(32);
+
+            try
+            {
+                var position = 0;
+
+                do
+                {
+                    var b = stream.ReadByte();
+
+                    if (b <= 0) // null byte or stream ended
+                    {
+                        break;
+                    }
+
+                    if (position >= buffer.Length)
+                    {
+                        var newBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length * 2);
+                        Buffer.BlockCopy(buffer, 0, newBuffer, 0, buffer.Length);
+                        ArrayPool<byte>.Shared.Return(buffer);
+                        buffer = newBuffer;
+                    }
+
+                    buffer[position++] = (byte)b;
+                }
+                while (true);
+
+                return Encoding.UTF8.GetString(buffer[..position]);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
     }
 }

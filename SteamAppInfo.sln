@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamAppInfoParser", "SteamAppInfoParser\SteamAppInfoParser.csproj", "{6B285D2E-0613-434D-86B5-A51CEA7D4445}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamAppInfoParser", "SteamAppInfoParser\SteamAppInfoParser.csproj", "{6B285D2E-0613-434D-86B5-A51CEA7D4445}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValveKeyValue", "..\..\ValveResourceFormat\ValveKeyValue\ValveKeyValue\ValveKeyValue\ValveKeyValue.csproj", "{DA073F8F-2816-4F11-983E-8C0A18F290BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6B285D2E-0613-434D-86B5-A51CEA7D4445}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B285D2E-0613-434D-86B5-A51CEA7D4445}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B285D2E-0613-434D-86B5-A51CEA7D4445}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA073F8F-2816-4F11-983E-8C0A18F290BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA073F8F-2816-4F11-983E-8C0A18F290BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA073F8F-2816-4F11-983E-8C0A18F290BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA073F8F-2816-4F11-983E-8C0A18F290BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

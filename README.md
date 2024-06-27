@@ -4,6 +4,29 @@ This is mostly intended as an example on how to read these files.
 
 ## appinfo.vdf
 ```
+uint32   - MAGIC: 29 44 56 07
+uint32   - UNIVERSE: 1
+int64    - Offset to string table from start of the file
+---- repeated app sections ----
+uint32   - AppID
+uint32   - size // until end of binary_vdf
+uint32   - infoState // mostly 2, sometimes 1 (may indicate prerelease or no info)
+uint32   - lastUpdated
+uint64   - picsToken
+20bytes  - SHA1 // of text appinfo vdf, as seen in CMsgClientPICSProductInfoResponse.AppInfo.sha
+uint32   - changeNumber
+20bytes  - SHA1 // of binary_vdf
+variable - binary_vdf
+---- end of section ----
+uint32   - EOF: 0
+
+---- offset to the string table ----
+uint32   - Count of strings
+null-term strings[count]
+```
+
+## appinfo.vdf (before june 2024)
+```
 uint32   - MAGIC: 28 44 56 07
 uint32   - UNIVERSE: 1
 ---- repeated app sections ----
