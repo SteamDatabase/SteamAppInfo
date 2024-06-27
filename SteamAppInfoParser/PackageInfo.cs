@@ -13,7 +13,7 @@ namespace SteamAppInfoParser
 
         public EUniverse Universe { get; set; }
 
-        public List<Package> Packages { get; set; } = new List<Package>();
+        public List<Package> Packages { get; set; } = [];
 
         /// <summary>
         /// Opens and reads the given filename.
