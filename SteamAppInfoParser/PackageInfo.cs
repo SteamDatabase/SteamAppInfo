@@ -67,7 +67,8 @@ namespace SteamAppInfoParser
                 package.Data = deserializer.Deserialize(input);
 
                 Packages.Add(package);
-            } while (true);
+            }
+            while (true);
         }
     }
 }

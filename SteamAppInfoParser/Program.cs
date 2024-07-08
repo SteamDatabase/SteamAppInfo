@@ -18,6 +18,15 @@ namespace SteamAppInfoParser
                 return 1;
             }
 
+            PrintPackageInfo(steamLocation);
+            Console.WriteLine();
+            PrintAppInfo(steamLocation);
+
+            return 0;
+        }
+
+        private static void PrintAppInfo(string steamLocation)
+        {
             var appInfo = new AppInfo();
             appInfo.Read(Path.Join(steamLocation, "appcache", "appinfo.vdf"));
 
@@ -27,12 +36,13 @@ namespace SteamAppInfoParser
             {
                 if (app.Token > 0)
                 {
-                    Console.WriteLine($"App: {app.AppID} - Token: {app.Token}");
+                    Console.WriteLine($"App: {app.AppID} - Token: {app.Token} - {app.Data["common"]["name"]}");
                 }
             }
+        }
 
-            Console.WriteLine();
-
+        private static void PrintPackageInfo(string steamLocation)
+        {
             var packageInfo = new PackageInfo();
             packageInfo.Read(Path.Join(steamLocation, "appcache", "packageinfo.vdf"));
 
@@ -45,8 +55,6 @@ namespace SteamAppInfoParser
                     Console.WriteLine($"Package: {package.SubID} - Token: {package.Token}");
                 }
             }
-
-            return 0;
         }
 
         private static string GetSteamPath()
@@ -65,7 +73,7 @@ namespace SteamAppInfoParser
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                var paths = new [] {".steam", ".steam/steam", ".steam/root", ".local/share/Steam"};
+                var paths = new[] { ".steam", ".steam/steam", ".steam/root", ".local/share/Steam" };
 
                 return paths
                     .Select(path => Path.Join(home, path))

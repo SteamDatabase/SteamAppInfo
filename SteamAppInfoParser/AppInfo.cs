@@ -61,7 +61,7 @@ namespace SteamAppInfoParser
 
                 reader.BaseStream.Position = offset;
 
-                options.StringPool = stringPool;
+                options.StringTable = new(stringPool);
             }
 
             var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
@@ -101,7 +101,8 @@ namespace SteamAppInfoParser
                 }
 
                 Apps.Add(app);
-            } while (true);
+            }
+            while (true);
         }
 
         private static DateTime DateTimeFromUnixTime(uint unixTime)
