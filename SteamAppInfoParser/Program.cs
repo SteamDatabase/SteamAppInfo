@@ -3,89 +3,145 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using ValveKeyValue;
 
-namespace SteamAppInfoParser
+namespace SteamAppInfoParser;
+
+class Program
 {
-    class Program
+    static int Main(string[] args)
     {
-        static int Main()
-        {
-            var steamLocation = GetSteamPath();
+        Console.WriteLine("Usage: ./app <app/package> <path to vdf>");
+        Console.WriteLine("Do not specify arguments if you want to dump both files from your Steam client.");
 
-            if (steamLocation == null)
+        if (args.Length == 2)
+        {
+            var type = args[0];
+            var file = args[1];
+
+            if (type != "app" && type != "package")
             {
-                Console.Error.WriteLine("Can not find Steam");
+                Console.WriteLine("Wrong type.");
+            }
+
+            if (!File.Exists(file))
+            {
+                Console.WriteLine($"\"{file}\" does not exist.");
                 return 1;
             }
 
-            PrintPackageInfo(steamLocation);
-            Console.WriteLine();
-            PrintAppInfo(steamLocation);
+            if (type == "app")
+            {
+                DumpAppInfo(file);
+            }
+
+            if (type == "package")
+            {
+                DumpPackageInfo(file);
+            }
 
             return 0;
         }
-
-        private static void PrintAppInfo(string steamLocation)
+        else if (args.Length != 0)
         {
-            var appInfo = new AppInfo();
-            appInfo.Read(Path.Join(steamLocation, "appcache", "appinfo.vdf"));
-
-            Console.WriteLine($"{appInfo.Apps.Count} apps");
-
-            foreach (var app in appInfo.Apps)
-            {
-                if (app.Token > 0)
-                {
-                    Console.WriteLine($"App: {app.AppID} - Token: {app.Token} - {app.Data["common"]["name"]}");
-                }
-            }
+            return 1;
         }
 
-        private static void PrintPackageInfo(string steamLocation)
+        var steamLocation = GetSteamPath();
+
+        if (steamLocation == null)
         {
-            var packageInfo = new PackageInfo();
-            packageInfo.Read(Path.Join(steamLocation, "appcache", "packageinfo.vdf"));
-
-            Console.WriteLine($"{packageInfo.Packages.Count} packages");
-
-            foreach (var package in packageInfo.Packages)
-            {
-                if (package.Token > 0)
-                {
-                    Console.WriteLine($"Package: {package.SubID} - Token: {package.Token}");
-                }
-            }
+            Console.Error.WriteLine("Can not find Steam");
+            return 1;
         }
 
-        private static string GetSteamPath()
+        DumpAppInfo(Path.Join(steamLocation, "appcache", "appinfo.vdf"));
+        DumpPackageInfo(Path.Join(steamLocation, "appcache", "packageinfo.vdf"));
+
+        return 0;
+    }
+
+    private static void DumpAppInfo(string file)
+    {
+        Console.WriteLine($"Reading {file}");
+
+        var appInfo = new AppInfo();
+        appInfo.Read(file);
+        Console.WriteLine($"{appInfo.Apps.Count} apps");
+
+        using var stream = File.OpenWrite("appinfo_text.vdf");
+
+        var serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+
+        foreach (var app in appInfo.Apps)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            var kv = new KVObject($"app_{app.AppID}", app.Data.Value)
             {
-                var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Valve\\Steam") ??
-                          RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
-                              .OpenSubKey("SOFTWARE\\Valve\\Steam");
-
-                if (key != null && key.GetValue("SteamPath") is string steamPath)
-                {
-                    return steamPath;
-                }
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                var paths = new[] { ".steam", ".steam/steam", ".steam/root", ".local/share/Steam" };
-
-                return paths
-                    .Select(path => Path.Join(home, path))
-                    .FirstOrDefault(steamPath => Directory.Exists(Path.Join(steamPath, "appcache")));
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                return Path.Join(home, "Steam");
-            }
-
-            throw new PlatformNotSupportedException();
+                new KVObject("_token", app.Token),
+                new KVObject("_changenumber", (long)app.ChangeNumber),
+                new KVObject("_updated", app.LastUpdated.ToString("s")),
+                new KVObject("_hash", Convert.ToHexString([.. app.Hash]))
+            };
+            serializer.Serialize(stream, kv);
         }
+
+        Console.WriteLine($"Saved to {stream.Name}");
+    }
+
+    private static void DumpPackageInfo(string file)
+    {
+        Console.WriteLine($"Reading {file}");
+
+        var packageInfo = new PackageInfo();
+        packageInfo.Read(file);
+        Console.WriteLine($"{packageInfo.Packages.Count} packages");
+
+        using var stream = File.OpenWrite("packageinfo_text.vdf");
+
+        var serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+
+        foreach (var app in packageInfo.Packages)
+        {
+            var kv = new KVObject($"package_{app.SubID}", app.Data.Value)
+            {
+                new KVObject("_token", app.Token),
+                new KVObject("_changenumber", (long)app.ChangeNumber),
+                new KVObject("_hash", Convert.ToHexString([.. app.Hash]))
+            };
+            serializer.Serialize(stream, kv);
+        }
+
+        Console.WriteLine($"Saved to {stream.Name}");
+    }
+
+    private static string GetSteamPath()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Valve\\Steam") ??
+                      RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
+                          .OpenSubKey("SOFTWARE\\Valve\\Steam");
+
+            if (key != null && key.GetValue("SteamPath") is string steamPath)
+            {
+                return steamPath;
+            }
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var paths = new[] { ".steam", ".steam/steam", ".steam/root", ".local/share/Steam" };
+
+            return paths
+                .Select(path => Path.Join(home, path))
+                .FirstOrDefault(steamPath => Directory.Exists(Path.Join(steamPath, "appcache")));
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Join(home, "Steam");
+        }
+
+        throw new PlatformNotSupportedException();
     }
 }
