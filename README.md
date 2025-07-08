@@ -27,6 +27,8 @@ This is mostly intended as an example on how to read these files.
 | bytes    | 20       | 40+     | Binary SHA-1  | Hash of binary VDF data |
 | bytes    | variable |         | Binary VDF    | VDF data in binary format |
 
+Repeated read until the first uint32 (App ID) is zero (which is the file footer).
+
 ### File Footer
 
 | Type   | Size | Version | Field Name | Description |
@@ -67,6 +69,8 @@ Located at the offset specified in the file header:
 | uint32   | 4        |         | Change Number | Steam change number |
 | uint64   | 8        | 40+     | PICS Token    | Product Info Change Set token |
 | bytes    | variable |         | Binary VDF    | VDF data in binary format |
+
+Repeated read until the first uint32 (Package ID) is `0xFFFFFFFF` (which is the file footer).
 
 ### File Footer
 
