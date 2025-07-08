@@ -10,10 +10,6 @@ namespace SteamAppInfoParser
 {
     class AppInfo
     {
-        private const uint Magic29 = 0x07_56_44_29;
-        private const uint Magic28 = 0x07_56_44_28;
-        private const uint Magic = 0x07_56_44_27;
-
         public EUniverse Universe { get; set; }
 
         public List<App> Apps { get; set; } = [];
@@ -37,16 +33,24 @@ namespace SteamAppInfoParser
             using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic28 && magic != Magic29)
+            var version = magic & 0xFF;
+            magic >>= 8;
+
+            if (magic != 0x07_56_44)
             {
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
+            }
+
+            if (version < 39 || version > 41)
+            {
+                throw new InvalidDataException($"Unknown magic version: {version}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
 
             var options = new KVSerializerOptions();
 
-            if (magic == Magic29)
+            if (version >= 41)
             {
                 var stringTableOffset = reader.ReadInt64();
                 var offset = reader.BaseStream.Position;
@@ -88,7 +92,7 @@ namespace SteamAppInfoParser
                     ChangeNumber = reader.ReadUInt32(),
                 };
 
-                if (magic == Magic28 || magic == Magic29)
+                if (version >= 40)
                 {
                     app.BinaryDataHash = new ReadOnlyCollection<byte>(reader.ReadBytes(20));
                 }

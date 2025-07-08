@@ -8,9 +8,6 @@ namespace SteamAppInfoParser
 {
     class PackageInfo
     {
-        private const uint Magic = 0x06_56_55_28;
-        private const uint Magic27 = 0x06_56_55_27;
-
         public EUniverse Universe { get; set; }
 
         public List<Package> Packages { get; set; } = [];
@@ -34,9 +31,18 @@ namespace SteamAppInfoParser
             using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
-            if (magic != Magic && magic != Magic27)
+
+            var version = magic & 0xFF;
+            magic >>= 8;
+
+            if (magic != 0x06_56_55)
             {
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
+            }
+
+            if (version < 39 || version > 40)
+            {
+                throw new InvalidDataException($"Unknown magic version: {version}");
             }
 
             Universe = (EUniverse)reader.ReadUInt32();
@@ -59,7 +65,7 @@ namespace SteamAppInfoParser
                     ChangeNumber = reader.ReadUInt32(),
                 };
 
-                if (magic != Magic27)
+                if (version >= 40)
                 {
                     package.Token = reader.ReadUInt64();
                 }
