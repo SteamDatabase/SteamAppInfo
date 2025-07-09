@@ -45,12 +45,12 @@ and then parse the binary keyvalues with this string table.
 
 | Version | Magic Number | Start Date      | Description |
 |---------|--------------|-----------------|-------------|
-| 36      | `0x24445606` | circa 2011      | Added size field |
-| 37      | `0x25445607` | circa 2012      | Same structure as v36 |
-| 38      | `0x26445607` | circa 2013      | Added PICS token and SHA hash |
-| 39      | `0x27445607` | circa 2017      | Same as v38 but unified VDF structure |
-| 40      | `0x28445607` | Dec 2022        | Added binary VDF SHA1 hash validation |
-| 41      | `0x29445607` | June 2024       | Added string table with offset pointer |
+| 36      | `0x06564424` | circa 2011      | Added size field |
+| 37      | `0x07564425` | circa 2012      | Same structure as v36 |
+| 38      | `0x07564426` | circa 2013      | Added PICS token and SHA hash |
+| 39      | `0x07564427` | circa 2017      | Same as v38 but unified VDF structure |
+| 40      | `0x07564428` | Dec 2022        | Added binary VDF SHA1 hash validation |
+| 41      | `0x07564429` | June 2024       | Added string table with offset pointer |
 
 *For parsing older formats not implemented here, [see this repo](https://github.com/eepycats/appinfo-parser/).*
 
@@ -91,5 +91,5 @@ Repeated read until the first uint32 (Package ID) is `0xFFFFFFFF` (which is the 
 
 | Version | Magic Number | Start Date      | Description |
 |---------|--------------|-----------------|-------------|
-| 39      | `0x27555606` | Before Apr 2020 | Basic format |
-| 40      | `0x28555606` | Apr 2020        | Added PICS Token field |
+| 39      | `0x06555627` | Before Apr 2020 | Basic format |
+| 40      | `0x06555628` | Apr 2020        | Added PICS Token field |
