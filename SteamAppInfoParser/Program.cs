@@ -11,40 +11,33 @@ class Program
 {
     static int Main(string[] args)
     {
-        Console.WriteLine("Usage: ./app <app/package> <path to vdf>");
-        Console.WriteLine("Do not specify arguments if you want to dump both files from your Steam client.");
+        Console.WriteLine("Usage: ./app [path to vdf]");
+        Console.WriteLine("Do not specify path if you want to dump both files from your Steam client.");
 
-        if (args.Length == 2)
+        if (args.Length > 0)
         {
-            var type = args[0];
-            var file = args[1];
+            using var stream = File.OpenRead(args[0]);
 
-            if (type != "app" && type != "package")
+            // Use the second byte to check the type of file
+            stream.ReadByte();
+            var b = stream.ReadByte();
+            stream.Position = 0;
+
+            if (b == 0x44)
             {
-                Console.WriteLine("Wrong type.");
+                DumpAppInfo(stream);
             }
-
-            if (!File.Exists(file))
+            else if (b == 0x55)
             {
-                Console.WriteLine($"\"{file}\" does not exist.");
+                DumpPackageInfo(stream);
+            }
+            else
+            {
+                Console.WriteLine($"\"{stream.Name}\" has unknown magic.");
                 return 1;
             }
 
-            if (type == "app")
-            {
-                DumpAppInfo(file);
-            }
-
-            if (type == "package")
-            {
-                DumpPackageInfo(file);
-            }
-
             return 0;
-        }
-        else if (args.Length != 0)
-        {
-            return 1;
         }
 
         var steamLocation = GetSteamPath();
@@ -55,18 +48,25 @@ class Program
             return 1;
         }
 
-        DumpAppInfo(Path.Join(steamLocation, "appcache", "appinfo.vdf"));
-        DumpPackageInfo(Path.Join(steamLocation, "appcache", "packageinfo.vdf"));
+        using (var stream = File.OpenRead(Path.Join(steamLocation, "appcache", "appinfo.vdf")))
+        {
+            DumpAppInfo(stream);
+        }
+
+        using (var stream = File.OpenRead(Path.Join(steamLocation, "appcache", "packageinfo.vdf")))
+        {
+            DumpPackageInfo(stream);
+        }
 
         return 0;
     }
 
-    private static void DumpAppInfo(string file)
+    private static void DumpAppInfo(FileStream inputStream)
     {
-        Console.WriteLine($"Reading {file}");
+        Console.WriteLine($"Reading {inputStream.Name}");
 
         var appInfo = new AppInfo();
-        appInfo.Read(file);
+        appInfo.Read(inputStream);
         Console.WriteLine($"{appInfo.Apps.Count} apps");
 
         using var stream = File.OpenWrite("appinfo_text.vdf");
@@ -88,12 +88,12 @@ class Program
         Console.WriteLine($"Saved to {stream.Name}");
     }
 
-    private static void DumpPackageInfo(string file)
+    private static void DumpPackageInfo(FileStream inputStream)
     {
-        Console.WriteLine($"Reading {file}");
+        Console.WriteLine($"Reading {inputStream.Name}");
 
         var packageInfo = new PackageInfo();
-        packageInfo.Read(file);
+        packageInfo.Read(inputStream);
         Console.WriteLine($"{packageInfo.Packages.Count} packages");
 
         using var stream = File.OpenWrite("packageinfo_text.vdf");
